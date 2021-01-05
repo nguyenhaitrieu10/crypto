@@ -141,24 +141,3 @@ def load_cert(filename):
     cert = load_pem_x509_certificate(pemlines, default_backend())
     return cert
 
-
-def main():
-    gen_root_ca("Local Root CA")
-
-    root_private_key = load_key("certs/root_ca.key")
-    root_cert = load_cert("certs/root_ca.crt")
-    gen_ca(
-        root_cert=root_cert,
-        root_private_key=root_private_key,
-        common_name="Local Intermedia CA",
-    )
-
-    ca_private_key = load_key("certs/intermedia_ca.key")
-    ca_cert = load_cert("certs/intermedia_ca.crt")
-    gen_service(
-        ca_cert=ca_cert,
-        ca_private_key=ca_private_key,
-        domain='ca.example.com'
-    )
-
-main()
