@@ -47,30 +47,35 @@ def _gen_cryptography():
     public_key = private_key.public_key()
 
     builder = x509.CertificateBuilder()
-    builder = builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, socket.gethostname())]))
-    builder = builder.issuer_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, socket.gethostname())]))
+    builder = builder.subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u'Simple Root CA')]))
+    builder = builder.issuer_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u'Simple Root CA')]))
     builder = builder.not_valid_before(datetime.datetime.today() - one_day)
     builder = builder.not_valid_after(datetime.datetime.today() + (one_day*365*5))
     builder = builder.serial_number(x509.random_serial_number())
     builder = builder.public_key(public_key)
-    builder = builder.add_extension(
-        x509.SubjectAlternativeName([
-            x509.DNSName(socket.gethostname()),
-            x509.DNSName('*.%s' % socket.gethostname()),
-            x509.DNSName('localhost'),
-            x509.DNSName('*.localhost'),
-        ]),
-        critical=False)
-    builder = builder.add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+    # builder = builder.add_extension(
+    #     x509.SubjectAlternativeName([
+    #         x509.DNSName(socket.gethostname()),
+    #         x509.DNSName('*.%s' % socket.gethostname()),
+    #         x509.DNSName('localhost'),
+    #         x509.DNSName('*.localhost'),
+    #     ]),
+    #     critical=False)
+    builder = builder.add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
 
     certificate = builder.sign(
         private_key=private_key, algorithm=hashes.SHA256(),
         backend=default_backend())
 
-    return (certificate.public_bytes(serialization.Encoding.PEM),
-        private_key.private_bytes(serialization.Encoding.PEM,
+    certificate = certificate.public_bytes(serialization.Encoding.PEM)
+    privatekey =  private_key.private_bytes(serialization.Encoding.PEM,
             serialization.PrivateFormat.PKCS8,
-            serialization.NoEncryption()))
+            serialization.NoEncryption())
+
+    f = open("root.crt", "wb")
+    g = open("root.key", "wb")
+    f.write(certificate)
+    g.write(privatekey)
 
 def gen_self_signed_cert():
     '''
@@ -86,9 +91,4 @@ def gen_self_signed_cert():
     return (None, None)
 
 if __name__ == '__main__':
-    f = open("root.crt", "wb")
-    g = open("root.key", "wb")
-    certificate, privatekey = _gen_openssl()
-    # certificate, privatekey = _gen_cryptography()
-    f.write(certificate)
-    g.write(privatekey)
+    certificate, privatekey = _gen_cryptography()
